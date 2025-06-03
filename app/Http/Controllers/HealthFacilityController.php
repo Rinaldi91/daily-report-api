@@ -14,7 +14,7 @@ class HealthFacilityController extends Controller
     {
         try {
 
-            $query = HealthFacility::with('type', 'medicalDevice');
+            $query = HealthFacility::with('type');
 
             if ($request) {
                 $query->where('name', 'like', '%' . $request->search . '%');
@@ -49,10 +49,10 @@ class HealthFacilityController extends Controller
         }
     }
 
-    public function show($id)
+    public function show($slug)
     {
         try {
-            $facility = HealthFacility::with('type')->where('id', $id)->firstOrFail();
+            $facility = HealthFacility::with('type')->where('slug', $slug)->firstOrFail();
 
             return response()->json([
                 'status' => true,
@@ -67,6 +67,7 @@ class HealthFacilityController extends Controller
             ], 404);
         }
     }
+
 
     public function store(Request $request)
     {

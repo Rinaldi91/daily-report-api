@@ -22,7 +22,7 @@ class HealthFacility extends Model
         'address'
     ];
 
-    public function typeHealthFacility()
+    public function type()
     {
         return $this->belongsTo(TypeOfHealthFacility::class, 'type_of_health_facility_id');
     }
@@ -31,7 +31,6 @@ class HealthFacility extends Model
     {
         return $this->hasMany(Report::class, 'health_facility_id');
     }
-
 
     protected static function boot()
     {
