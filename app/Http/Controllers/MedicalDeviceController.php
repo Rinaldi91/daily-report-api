@@ -73,13 +73,13 @@ class MedicalDeviceController extends Controller
         DB::beginTransaction();
         try {
             $validator = Validator::make($request->all(), [
-                'brans' => 'required|string|max:255',
+                'brand' => 'required|string|max:255',
                 'model' => 'required|string|max:255',
                 'serial_number' => 'required|string|max:255|unique:medical_devices',
-                'status' => 'required|integer|in:0,1,2',
+                'status' => 'required|string|max:255',
                 'notes' => 'nullable|string',
+                'software_version' => 'nullable|string',
                 'medical_device_category_id' => 'nullable|exists:medical_device_categories,id',
-                'health_facility_id' => 'nullable|exists:health_facilities,id',
             ]);
 
             if ($validator->fails()) {
@@ -118,13 +118,13 @@ class MedicalDeviceController extends Controller
             $device = MedicalDevice::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
-                'brans' => 'required|string|max:255',
+                'brand' => 'required|string|max:255',
                 'model' => 'required|string|max:255',
                 'serial_number' => 'required|string|max:255|unique:medical_devices,serial_number,' . $device->id,
-                'status' => 'required|integer|in:0,1,2',
+                'status' => 'required|string',
                 'notes' => 'nullable|string',
+                'software_version' => 'nullable|string',
                 'medical_device_category_id' => 'nullable|exists:medical_device_categories,id',
-                'health_facility_id' => 'nullable|exists:health_facilities,id',
             ]);
 
             if ($validator->fails()) {

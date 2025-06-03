@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HealthFacilityController;
+use App\Http\Controllers\MedicalDeviceCategoryController;
+use App\Http\Controllers\MedicalDeviceController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TypeOfHealthFacilityController;
@@ -63,6 +65,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('health-facility/{slug}', [HealthFacilityController::class, 'update'])->middleware('check.permission:update-health-facility');
     Route::delete('health-facility/{slug}', [HealthFacilityController::class, 'destroy'])->middleware('check.permission:delete-health-facility');
 
+    //Medical Device Category
+    Route::get('medical-device-category', [MedicalDeviceCategoryController::class, 'index'])->middleware('check.permission:view-medical-device-category');
+    Route::get('medical-device-category/{slug}', [MedicalDeviceCategoryController::class, 'show'])->middleware('check.permission:show-medical-device-category');
+    Route::post('medical-device-category', [MedicalDeviceCategoryController::class, 'store'])->middleware('check.permission:create-medical-device-category');
+    Route::put('medical-device-category/{slug}', [MedicalDeviceCategoryController::class, 'update'])->middleware('check.permission:update-medical-device-category');
+    Route::delete('medical-device-category/{slug}', [MedicalDeviceCategoryController::class, 'destroy'])->middleware('check.permission:delete-medical-device-category');
     
-    
+    //Medical Device
+    Route::get('medical-device', [MedicalDeviceController::class, 'index'])->middleware('check.permission:view-medical-device');
+    Route::get('medical-device/{id}', [MedicalDeviceController::class, 'show'])->middleware('check.permission:show-medical-device');
+    Route::post('medical-device', [MedicalDeviceController::class, 'store'])->middleware('check.permission:create-medical-device');
+    Route::put('medical-device/{id}', [MedicalDeviceController::class, 'update'])->middleware('check.permission:update-medical-device');
+    Route::delete('medical-device/{id}', [MedicalDeviceController::class, 'destroy'])->middleware('check.permission:delete-medical-device');
 });

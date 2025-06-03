@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('medical_devices', function (Blueprint $table) {
             $table->id();
             $table->foreignId('medical_device_category_id')->constrained();
-            $table->text('brans');
+            $table->text('brand');
             $table->string('model');
             $table->string('serial_number');
             $table->string('software_version')->nullable();
