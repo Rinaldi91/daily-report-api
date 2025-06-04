@@ -10,23 +10,48 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    public function index()
+   public function index(Request $request)
     {
-        $users = User::with('role.permissions')->get();
+        try {
+            $query = User::with('role.permissions');
 
-        if ($users->isEmpty()) {
+            // Optional search by name or email
+            if ($request->has('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            }
+
+            // Handle pagination
+            $perPage = $request->query('per_page', 10);
+            $users = $query->paginate($perPage);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Data retrieved successfully',
+                'data' => $users->items(),
+                'meta' => [
+                    'current_page' => $users->currentPage(),
+                    'last_page' => $users->lastPage(),
+                    'per_page' => $users->perPage(),
+                    'total' => $users->total()
+                ],
+                'links' => [
+                    'first' => $users->url(1),
+                    'last' => $users->url($users->lastPage()),
+                    'prev' => $users->previousPageUrl(),
+                    'next' => $users->nextPageUrl()
+                ]
+            ], 200);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'No users found.',
-                'users' => []
-            ], 404);
+                'message' => 'Failed to retrieve user data',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Data retrieval was successful.',
-            'users' => $users
-        ]);
     }
 
     public function store(Request $request)
