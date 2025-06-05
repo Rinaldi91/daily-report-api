@@ -10,24 +10,47 @@ use Illuminate\Support\Str;
 
 class RoleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $roles = Role::with('permissions')->get();
+        try {
+            $query = Role::with('permissions');
 
-        if ($roles->isEmpty()) {
+            // Optional search by role name
+            if ($request->has('search')) {
+                $search = $request->search;
+                $query->where('name', 'like', "%{$search}%");
+            }
+
+            // Handle pagination
+            $perPage = $request->query('per_page', 10);
+            $roles = $query->paginate($perPage);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Data retrieved successfully',
+                'data' => $roles->items(),
+                'meta' => [
+                    'current_page' => $roles->currentPage(),
+                    'last_page' => $roles->lastPage(),
+                    'per_page' => $roles->perPage(),
+                    'total' => $roles->total()
+                ],
+                'links' => [
+                    'first' => $roles->url(1),
+                    'last' => $roles->url($roles->lastPage()),
+                    'prev' => $roles->previousPageUrl(),
+                    'next' => $roles->nextPageUrl()
+                ]
+            ], 200);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'Data not found.',
-                'roles' => []
-            ], 404);
+                'message' => 'Failed to retrieve role data',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Data retrieval was successful.',
-            'roles' => $roles
-        ]);
     }
+
 
     public function store(Request $request)
     {

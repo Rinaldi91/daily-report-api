@@ -40,14 +40,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // Role routes
     Route::get('/roles', [RoleController::class, 'index'])->middleware('check.permission:view-roles');
     Route::get('/roles/{id}', [RoleController::class, 'show'])->middleware('check.permission:show-roles');
-    Route::post('/roles', [RoleController::class, 'create'])->middleware('check.permission:create-roles');
+    Route::post('/roles', [RoleController::class, 'store'])->middleware('check.permission:create-roles');
     Route::put('/roles/{id}', [RoleController::class, 'update'])->middleware('check.permission:update-roles');
     Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->middleware('check.permission:delete-roles');
 
     // Permission routes
     Route::get('/permission', [PermissionController::class, 'index'])->middleware('check.permission:view-permissions');
+    Route::get('/permission-with-pagination', [PermissionController::class, 'paginate'])->middleware('check.permission:view-permissions');
     Route::get('/permission/{id}', [PermissionController::class, 'show'])->middleware('check.permission:show-permissions');
-    Route::post('/permission', [PermissionController::class, 'create'])->middleware('check.permission:create-permissions');
+    Route::post('/permission', [PermissionController::class, 'store'])->middleware('check.permission:create-permissions');
     Route::put('/permission/{id}', [PermissionController::class, 'update'])->middleware('check.permission:update-permissions');
     Route::delete('/permission/{id}', [PermissionController::class, 'delete'])->middleware('check.permission:delete-permissions');
 
