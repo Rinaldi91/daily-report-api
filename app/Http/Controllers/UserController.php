@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -15,7 +14,7 @@ class UserController extends Controller
     {
         try {
             $query = User::with('role.permissions');
-            
+
             $query->orderBy('created_at', 'desc');
 
             // Optional search by name or email

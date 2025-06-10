@@ -12,19 +12,19 @@ class Employee extends Model
     protected $table = 'employees';
     protected $fillable = [
         'user_id',
-        'region_id',
         'division_id',
         'position_id',
         'employee_number',
+        'region',
         'nik',
         'name',
         'gender',
         'place_of_birth',
         'date_of_birth',
         'phone_number',
-        'email',
         'address',
         'status',
+        'email',
         'date_of_entry',
         'is_active',
         'photo'
@@ -33,11 +33,6 @@ class Employee extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function region()
-    {
-        return $this->belongsTo(Region::class, 'region_id');
     }
 
     public function division()

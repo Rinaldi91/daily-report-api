@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HealthFacilityController;
 use App\Http\Controllers\MedicalDeviceCategoryController;
 use App\Http\Controllers\MedicalDeviceController;
@@ -109,5 +110,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('position', [PositionController::class, 'store'])->middleware('check.permission:create-position');
     Route::put('position/{slug}', [PositionController::class, 'update'])->middleware('check.permission:update-position');
     Route::delete('position/{slug}', [PositionController::class, 'destroy'])->middleware('check.permission:delete-position');
+
+    //Employee
+    Route::get('employee', [EmployeeController::class, 'index'])->middleware('check.permission:view-employee');
+    Route::get('employee/{id}', [EmployeeController::class, 'show'])->middleware('check.permission:show-employee');
+    Route::post('employee', [EmployeeController::class, 'store'])->middleware('check.permission:create-employee');
+    Route::put('employee/{id}', [EmployeeController::class, 'update'])->middleware('check.permission:update-employee');
+    Route::delete('employee/{id}', [EmployeeController::class, 'destroy'])->middleware('check.permission:delete-employee');
     
 });

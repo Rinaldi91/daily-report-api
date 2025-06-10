@@ -97,7 +97,14 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'View Completion Status', 'slug' => 'view-completion-status'],
             ['name' => 'Show Completion Status', 'slug' => 'show-completion-status'],
             ['name' => 'Update Completion Status', 'slug' => 'update-completion-status'],
-            ['name' => 'Delete Completion Status', 'slug' => 'delete-completion-status'],   
+            ['name' => 'Delete Completion Status', 'slug' => 'delete-completion-status'],  
+            
+            //Employee
+            ['name' => 'Create Employee', 'slug' => 'create-employee'],
+            ['name' => 'View Employee', 'slug' => 'view-employee'],
+            ['name' => 'Show Employee', 'slug' => 'show-employee'],
+            ['name' => 'Update Employee', 'slug' => 'update-employee'],
+            ['name' => 'Delete Employee', 'slug' => 'delete-employee'],
 
 
         ];
