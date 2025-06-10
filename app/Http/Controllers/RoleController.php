@@ -15,6 +15,7 @@ class RoleController extends Controller
         try {
             $query = Role::with('permissions');
 
+            $query->orderBy('created_at', 'desc');
             // Optional search by role name
             if ($request->has('search')) {
                 $search = $request->search;

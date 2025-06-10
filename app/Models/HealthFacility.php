@@ -19,7 +19,9 @@ class HealthFacility extends Model
         'email', 
         'city', 
         'phone_number', 
-        'address'
+        'address',
+        'lat',
+        'lng'
     ];
 
     public function type()
@@ -30,6 +32,17 @@ class HealthFacility extends Model
     public function reports()
     {
         return $this->hasMany(Report::class, 'health_facility_id');
+    }
+
+    // Relasi many-to-many dengan medical devices melalui pivot table
+    public function medicalDevices()
+    {
+        return $this->belongsToMany(
+            MedicalDevice::class, 
+            'health_facilities_medical_devices', 
+            'health_facility_id', 
+            'medical_device_id'
+        )->withTimestamps();
     }
 
     protected static function boot()

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\HealthFacilityController;
 use App\Http\Controllers\MedicalDeviceCategoryController;
 use App\Http\Controllers\MedicalDeviceController;
@@ -9,6 +10,9 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TypeOfHealthFacilityController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\IndonesiaController;
+use App\Http\Controllers\PositionController;
+use App\Http\Controllers\RegionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +27,11 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
+
+Route::get('/provinces', [IndonesiaController::class, 'getProvinces']);
+Route::get('/cities', [IndonesiaController::class, 'getCities']);
+Route::get('/districts', [IndonesiaController::class, 'getDistricts']);
+Route::get('/villages', [IndonesiaController::class, 'getVillages']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -50,7 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/permission/{id}', [PermissionController::class, 'show'])->middleware('check.permission:show-permissions');
     Route::post('/permission', [PermissionController::class, 'store'])->middleware('check.permission:create-permissions');
     Route::put('/permission/{id}', [PermissionController::class, 'update'])->middleware('check.permission:update-permissions');
-    Route::delete('/permission/{id}', [PermissionController::class, 'delete'])->middleware('check.permission:delete-permissions');
+    Route::delete('/permission/{id}', [PermissionController::class, 'destroy'])->middleware('check.permission:delete-permissions');
 
     //Type Of Health Facility
     Route::get('type-of-health-facility', [TypeOfHealthFacilityController::class, 'index'])->middleware('check.permission:view-type-of-health-facility');
@@ -63,8 +72,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('health-facility', [HealthFacilityController::class, 'index'])->middleware('check.permission:view-health-facility');
     Route::get('health-facility/{slug}', [HealthFacilityController::class, 'show'])->middleware('check.permission:show-health-facility');
     Route::post('health-facility', [HealthFacilityController::class, 'store'])->middleware('check.permission:create-health-facility');
-    Route::put('health-facility/{slug}', [HealthFacilityController::class, 'update'])->middleware('check.permission:update-health-facility');
-    Route::delete('health-facility/{slug}', [HealthFacilityController::class, 'destroy'])->middleware('check.permission:delete-health-facility');
+    Route::put('health-facility/{id}', [HealthFacilityController::class, 'update'])->middleware('check.permission:update-health-facility');
+    Route::delete('health-facility/{id}', [HealthFacilityController::class, 'destroy'])->middleware('check.permission:delete-health-facility');
 
     //Medical Device Category
     Route::get('medical-device-category', [MedicalDeviceCategoryController::class, 'index'])->middleware('check.permission:view-medical-device-category');
@@ -79,4 +88,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('medical-device', [MedicalDeviceController::class, 'store'])->middleware('check.permission:create-medical-device');
     Route::put('medical-device/{id}', [MedicalDeviceController::class, 'update'])->middleware('check.permission:update-medical-device');
     Route::delete('medical-device/{id}', [MedicalDeviceController::class, 'destroy'])->middleware('check.permission:delete-medical-device');
+
+    //Region
+    Route::get('region', [RegionController::class, 'index'])->middleware('check.permission:view-region');
+    Route::get('region/{slug}', [RegionController::class, 'show'])->middleware('check.permission:show-region');
+    Route::post('region', [RegionController::class, 'store'])->middleware('check.permission:create-region');
+    Route::put('region/{slug}', [RegionController::class, 'update'])->middleware('check.permission:update-region');
+    Route::delete('region/{slug}', [RegionController::class, 'destroy'])->middleware('check.permission:delete-region');
+
+    //Division
+    Route::get('division',[DivisionController::class, 'index'])->middleware('check.permission:view-division');
+    Route::get('division/{slug}', [DivisionController::class, 'show'])->middleware('check.permission:show-division');
+    Route::post('division', [DivisionController::class, 'store'])->middleware('check.permission:create-division');
+    Route::put('division/{slug}', [DivisionController::class, 'update'])->middleware('check.permission:update-division');
+    Route::delete('division/{slug}', [DivisionController::class, 'destroy'])->middleware('check.permission:delete-division');
+
+    //Position
+    Route::get('position', [PositionController::class, 'index'])->middleware('check.permission:view-position');
+    Route::get('position/{slug}', [PositionController::class, 'show'])->middleware('check.permission:show-position');
+    Route::post('position', [PositionController::class, 'store'])->middleware('check.permission:create-position');
+    Route::put('position/{slug}', [PositionController::class, 'update'])->middleware('check.permission:update-position');
+    Route::delete('position/{slug}', [PositionController::class, 'destroy'])->middleware('check.permission:delete-position');
+    
 });

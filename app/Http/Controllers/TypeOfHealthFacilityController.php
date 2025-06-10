@@ -15,12 +15,29 @@ class TypeOfHealthFacilityController extends Controller
         try {
             $query = TypeOfHealthFacility::query();
 
+            $query->orderBy('created_at', 'desc');
+
             // Handle search by name if provided
             if ($request->has('search')) {
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
 
-            // Pagination
+            // Handle pagination or return all if per_page=All
+            if (strtolower($request->per_page) === 'all') {
+                $facilities = $query->get();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'All data retrieved successfully',
+                    'data' => $facilities,
+                    'meta' => [
+                        'total' => $facilities->count(),
+                    ],
+                    'links' => []
+                ], 200);
+            }
+
+            // Default pagination
             $perPage = $request->per_page ?? 10;
             $facilities = $query->paginate($perPage);
 
@@ -49,6 +66,7 @@ class TypeOfHealthFacilityController extends Controller
             ], 500);
         }
     }
+
 
     public function store(Request $request)
     {
@@ -115,16 +133,16 @@ class TypeOfHealthFacilityController extends Controller
         }
     }
 
-    public function update(Request $request, $slug)
+    public function update(Request $request, $id)
     {
         DB::beginTransaction(); // Mulai transaksi
 
         try {
-            $facility = TypeOfHealthFacility::where('slug', $slug)->firstOrFail();
+            $facility = TypeOfHealthFacility::where('id', $id)->firstOrFail();
 
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|required|string|max:255',
-                'slug' => 'sometimes|nullable|string|max:255|unique:type_of_health_facilities,slug,' . $facility->id,
+                'slug' => 'sometimes|nullable|string|max:255|unique:type_of_health_facilities,slug,' . $id,
                 'description' => 'sometimes|nullable|string'
             ]);
 

@@ -15,13 +15,30 @@ class MedicalDeviceCategoryController extends Controller
         try {
             $query = MedicalDeviceCategory::query();
 
+            // Urutkan berdasarkan data terbaru
+            $query->orderBy('created_at', 'desc');
+
             // Handle search by name if provided
             if ($request->has('search')) {
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
 
-            // Pagination
-            $perPage = $request->per_page ?? 10;
+            // Ambil nilai per_page dari request
+            $perPage = $request->per_page;
+
+            // Jika per_page = All, ambil semua data tanpa pagination
+            if (strtolower($perPage) === 'all') {
+                $categories = $query->get();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'All data retrieved successfully',
+                    'data' => $categories,
+                ], 200);
+            }
+
+            // Default: paginate
+            $perPage = is_numeric($perPage) ? (int) $perPage : 10;
             $categories = $query->paginate($perPage);
 
             return response()->json([
@@ -49,6 +66,8 @@ class MedicalDeviceCategoryController extends Controller
             ], 500);
         }
     }
+
+
 
     public function store(Request $request)
     {
@@ -95,16 +114,16 @@ class MedicalDeviceCategoryController extends Controller
         }
     }
 
-    public function update(Request $request, $slug)
+    public function update(Request $request, $id)
     {
         DB::beginTransaction();
 
         try {
-            $category = MedicalDeviceCategory::where('slug', $slug)->firstOrFail();
+            $category = MedicalDeviceCategory::where('id', $id)->firstOrFail();
 
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|required|string|max:255',
-                'slug' => 'sometimes|nullable|string|max:255|unique:medical_device_categories,slug,' . $category->id,
+                'slug' => 'sometimes|nullable|string|max:255|unique:medical_device_categories,slug,' . $id,
                 'description' => 'sometimes|nullable|string'
             ]);
 

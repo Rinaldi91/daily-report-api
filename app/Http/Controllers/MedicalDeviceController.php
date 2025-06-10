@@ -11,16 +11,38 @@ class MedicalDeviceController extends Controller
 {
     public function index(Request $request)
     {
-        try{
+        try {
             $query = MedicalDevice::query();
 
-            // Handle search by name if provided
+            // Urutkan berdasarkan data terbaru
+            $query->orderBy('created_at', 'desc');
+
+            // Filter pencarian berdasarkan brand, model, atau serial_number (optional)
             if ($request->has('search')) {
-                $query->where('brand', 'like', '%' . $request->search . '%');
+                $query->where(function ($q) use ($request) {
+                    $q->where('brand', 'like', '%' . $request->search . '%')
+                        ->orWhere('model', 'like', '%' . $request->search . '%')
+                        ->orWhere('serial_number', 'like', '%' . $request->search . '%');
+                });
             }
 
-            // Pagination
-            $perPage = $request->per_page ?? 10;
+            // Jika user meminta semua data tanpa pagination
+            if (strtoupper($request->page_all) === 'ALL') {
+                $devices = $query->get();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'All data retrieved successfully',
+                    'data' => $devices,
+                    'meta' => [
+                        'total' => $devices->count(),
+                        'page_all' => true
+                    ]
+                ], 200);
+            }
+
+            // Jika tidak, kembalikan data dengan pagination
+            $perPage = is_numeric($request->per_page) ? (int) $request->per_page : 10;
             $devices = $query->paginate($perPage);
 
             return response()->json([
@@ -31,7 +53,8 @@ class MedicalDeviceController extends Controller
                     'current_page' => $devices->currentPage(),
                     'last_page' => $devices->lastPage(),
                     'per_page' => $devices->perPage(),
-                    'total' => $devices->total()
+                    'total' => $devices->total(),
+                    'page_all' => false
                 ],
                 'links' => [
                     'first' => $devices->url(1),
@@ -40,14 +63,16 @@ class MedicalDeviceController extends Controller
                     'next' => $devices->nextPageUrl()
                 ]
             ], 200);
-
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Failed to retrieve data',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
+
+
 
     public function show($id)
     {

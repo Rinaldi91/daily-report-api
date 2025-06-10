@@ -7,13 +7,16 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-   public function index(Request $request)
+    public function index(Request $request)
     {
         try {
             $query = User::with('role.permissions');
+            
+            $query->orderBy('created_at', 'desc');
 
             // Optional search by name or email
             if ($request->has('search')) {
@@ -106,8 +109,8 @@ class UserController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
-            'password' => 'nullable|string|min:8|confirmed',
+            'email' => 'required|string|email',
+            'password' => 'nullable|string|min:8|confirmed|null',
             'role_id' => 'nullable|exists:roles,id',
         ]);
 
@@ -121,9 +124,14 @@ class UserController extends Controller
         $userData = [
             'name' => $request->name,
             'email' => $request->email,
-            'role_id' => $request->role_id,
         ];
 
+        // Only add role_id if it's provided and not null
+        if ($request->has('role_id') && !is_null($request->role_id)) {
+            $userData['role_id'] = $request->role_id;
+        }
+
+        // Only update password if provided
         if ($request->filled('password')) {
             $userData['password'] = Hash::make($request->password);
         }

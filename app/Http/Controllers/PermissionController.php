@@ -32,6 +32,7 @@ class PermissionController extends Controller
     {
         try {
             $query = Permission::query();
+            $query->orderBy('created_at', 'desc');
 
             // Optional search by permission name
             if ($request->has('search')) {

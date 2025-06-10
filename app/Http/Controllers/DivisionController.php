@@ -14,6 +14,8 @@ class DivisionController extends Controller
     {
         try {
             $query = Division::query();
+            
+            $query->orderBy('created_at', 'desc');
 
             // Handle search by name if provided
             if ($request->has('search')) {
@@ -93,10 +95,10 @@ class DivisionController extends Controller
         }
     }
 
-    public function show($slug)
+    public function show($id)
     {
         try {
-            $division = Division::where('slug', $slug)->firstOrFail();
+            $division = Division::findOrFail($id);
 
             return response()->json([
                 'status' => true,
@@ -112,17 +114,17 @@ class DivisionController extends Controller
         }
     }
 
-    public function update(Request $request, $slug)
+    public function update(Request $request, $id)
     {
 
         DB::beginTransaction();
 
         try {
-            $division = Division::where('slug', $slug)->firstOrFail();
+            $division = Division::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|required|string|max:255',
-                'slug' => 'sometimes|nullable|string|max:255|unique:divisions,slug,' . $division->id,
+                'slug' => 'sometimes|nullable|string|max:255|unique:divisions,slug,' . $id,
                 'description' => 'sometimes|nullable|string'
             ]);
 
@@ -159,10 +161,10 @@ class DivisionController extends Controller
         }
     }
 
-    public function destroy($slug)
+    public function destroy($id)
     {
         try {
-            $division = Division::where('slug', $slug)->firstOrFail();
+            $division = Division::findOrFail($id);
             $division->delete();
 
             return response()->json([

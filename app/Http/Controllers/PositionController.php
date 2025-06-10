@@ -14,6 +14,8 @@ class PositionController extends Controller
     {
         try{
             $query = Position::query(); 
+            
+            $query->orderBy('created_at', 'desc');
 
             // Handle search by name if provided
             if ($request->has('search')) {
@@ -94,10 +96,10 @@ class PositionController extends Controller
         }
     }
 
-    public function show($slug)
+    public function show($id)
     {
         try {
-            $position = Position::where('slug', $slug)->firstOrFail();  
+            $position = Position::findOrFail($id);  
 
             return response()->json([
                 'status' => true,
@@ -113,11 +115,11 @@ class PositionController extends Controller
         }
     }
 
-    public function update(Request $request, $slug)
+    public function update(Request $request, $id)
     {
         DB::beginTransaction();
         try {
-            $position = Position::where('slug', $slug)->firstOrFail();  
+            $position = Position::where('id', $id)->firstOrFail();  
 
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|required|string|max:255',
@@ -158,10 +160,10 @@ class PositionController extends Controller
         }
     }
 
-    public function destroy($slug)
+    public function destroy($id)
     {
         try {
-            $position = Position::where('slug', $slug)->firstOrFail();
+            $position = Position::where('id', $id)->firstOrFail();
             $position->delete();
 
             return response()->json([
