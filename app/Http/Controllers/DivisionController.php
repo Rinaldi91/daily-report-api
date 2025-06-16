@@ -22,7 +22,19 @@ class DivisionController extends Controller
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
 
-            // Pagination
+            // BARU: Tambahkan kondisi untuk memeriksa parameter 'all'
+            // Jika request memiliki parameter 'all', kembalikan semua data tanpa paginasi.
+            if ($request->has('all')) {
+                $divisions = $query->get(); // Gunakan get() untuk mengambil semua record
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'All data retrieved successfully',
+                    'data' => $divisions,
+                ], 200);
+            }
+
+            // Logika paginasi yang sudah ada akan berjalan jika parameter 'all' tidak ada.
             $perPage = $request->per_page ?? 10;
             $divisions = $query->paginate($perPage);
 

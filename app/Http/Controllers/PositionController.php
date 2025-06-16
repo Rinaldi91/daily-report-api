@@ -22,6 +22,17 @@ class PositionController extends Controller
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
 
+            if ($request->has('all')) {
+                $positions = $query->get(); // Gunakan get() untuk mengambil semua record
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'All data retrieved successfully',
+                    'data' => $positions,
+                ], 200);
+            }
+
+
             // Pagination
             $perPage = $request->per_page ?? 10;
             $positions = $query->paginate($perPage);
