@@ -9,6 +9,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class EmployeeController extends Controller
 {
@@ -73,9 +75,6 @@ class EmployeeController extends Controller
             ], 500);
         }
     }
-
-
-
     public function show($id)
     {
         try {
@@ -102,7 +101,6 @@ class EmployeeController extends Controller
             ], 404);
         }
     }
-
 
     public function store(Request $request)
     {
@@ -238,129 +236,99 @@ class EmployeeController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Cari employee yang akan diupdate atau gagalkan jika tidak ada
+        $employee = Employee::findOrFail($id);
+
+        // Aturan validasi yang lebih bersih dan aman
+        $validatedData = $request->validate([
+            'user_id'       => 'nullable|exists:users,id',
+            'region'        => 'required|string|max:255',
+            'division_id'   => 'required|exists:divisions,id',
+            'position_id'   => 'required|exists:positions,id',
+            // Gunakan Rule::unique untuk mengabaikan ID saat ini. Ini lebih mudah dibaca.
+            'nik'           => ['required', 'string', 'digits:16', Rule::unique('employees')->ignore($employee->id)],
+            'name'          => 'required|string|max:255',
+            'gender'        => 'required|string|in:Laki-Laki,Perempuan', // Lebih spesifik
+            'place_of_birth' => 'required|string|max:255',
+            'date_of_birth' => 'required|date',
+            'email'         => ['required', 'email', 'max:255', Rule::unique('employees')->ignore($employee->id)],
+            'phone_number'  => ['required', 'string', 'numeric', 'digits_between:10,15', Rule::unique('employees')->ignore($employee->id)],
+            'address'       => 'required|string',
+            'date_of_entry' => 'required|date',
+            'photo'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'is_active'     => 'required|boolean',
+        ]);
+
+        // Karena validasi di atas sudah menangani keunikan NIK, email, dan phone_number,
+        // blok pengecekan manual yang menyebabkan error bisa DIHAPUS.
+        // Namun, jika Anda tetap ingin melakukannya, berikut cara yang benar:
+        /*
+        $existingEmployee = Employee::where(function ($query) use ($validatedData) {
+            $query->where('email', $validatedData['email'])
+                  ->orWhere('phone_number', $validatedData['phone_number']);
+        })->where('id', '!=', $employee->id)->first();
+
+        if ($existingEmployee) {
+            $field = $existingEmployee->email === $validatedData['email'] ? 'email' : 'phone number';
+            return response()->json([
+                'status' => false,
+                'message' => "Employee with this {$field} already exists.",
+            ], 409);
+        }
+        */
+
+
         try {
             DB::beginTransaction();
 
-            // Cari employee yang akan diupdate
-            $employee = Employee::findOrFail($id);
+            $photoFileName = $employee->photo; // Defaultnya adalah foto lama
 
-            $validation = $request->validate([
-                'user_id' => 'nullable|exists:users,id',
-                'region' => 'required|string',
-                'division_id' => 'required|exists:divisions,id',
-                'position_id' => 'required|exists:positions,id',
-                'nik' => 'required|string|digits:16|unique:employees,nik,' . $id,
-                'name' => 'required|string',
-                'gender' => 'required|string',
-                'place_of_birth' => 'required|string',
-                'date_of_birth' => 'required|date',
-                'email' => 'required|email|unique:employees,email,' . $id,
-                'phone_number' => 'required|string|numeric|digits_between:1,13',
-                'address' => 'required|string',
-                'date_of_entry' => 'required|date',
-                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'is_active' => 'required|boolean',
-            ]);
-
-            // ✅ Cek apakah sudah ada employee lain dengan email atau phone_number yang sama
-            $existingEmployee = Employee::where('email', $validation['email'])
-                ->orWhere('phone_number', $validation['phone_number'])
-                ->where('id', '!=', $id)
-                ->first();
-
-            if ($existingEmployee) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Employee with this email or phone number already exists',
-                    'data' => [
-                        'email' => $existingEmployee->email,
-                        'phone_number' => $existingEmployee->phone_number,
-                    ]
-                ], 409);
-            }
-
-            // ✅ Handle photo upload dan hapus photo lama jika ada photo baru
-            $photoFileName = $employee->photo; // Default: gunakan photo yang sudah ada
-            $oldPhotoPath = null;
-
+            // Handle upload foto baru jika ada
             if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
-                $photoFile = $request->file('photo');
-
-                // Simpan path photo lama untuk dihapus nanti
+                // Hapus foto lama dari storage jika ada
                 if ($employee->photo) {
-                    $oldPhotoPath = storage_path('app/public/employee_photos/' . $employee->photo);
+                    Storage::disk('public')->delete('employee_photos/' . $employee->photo);
                 }
 
-                // Generate nama file baru dengan employee number yang sudah ada
+                // Generate nama file baru yang unik dan simpan
+                $photoFile = $request->file('photo');
                 $photoFileName = $employee->employee_number . '_' . time() . '.' . $photoFile->getClientOriginalExtension();
-
-                // Simpan file baru ke storage/app/public/employee_photos
                 $photoFile->storeAs('employee_photos', $photoFileName, 'public');
             }
 
-            // Update user jika ada user_id dan email berubah
+            // Update data user terkait jika ada
             if ($employee->user_id) {
                 $user = User::find($employee->user_id);
                 if ($user) {
-                    // Cek unique email di users table (kecuali user saat ini)
-                    $existingUser = User::where('email', $validation['email'])
+                    // Cek duplikasi email di tabel users, abaikan user saat ini
+                    $existingUser = User::where('email', $validatedData['email'])
                         ->where('id', '!=', $user->id)
                         ->first();
-
+                    
                     if ($existingUser) {
+                        DB::rollBack(); // Batalkan transaksi jika email sudah dipakai user lain
                         return response()->json([
                             'status' => false,
-                            'message' => 'Email already exists in users table',
-                            'data' => [
-                                'email' => $validation['email']
-                            ]
+                            'message' => 'This email is already taken by another user.',
                         ], 409);
                     }
 
                     $user->update([
-                        'name' => $validation['name'],
-                        'email' => $validation['email'],
+                        'name' => $validatedData['name'],
+                        'email' => $validatedData['email'],
                     ]);
                 }
             }
 
-            // Siapkan data untuk update employee
-            $employeeData = [
-                'region' => $validation['region'],
-                'division_id' => $validation['division_id'],
-                'position_id' => $validation['position_id'],
-                'nik' => $validation['nik'],
-                'name' => $validation['name'],
-                'gender' => $validation['gender'],
-                'place_of_birth' => $validation['place_of_birth'],
-                'date_of_birth' => $validation['date_of_birth'],
-                'email' => $validation['email'],
-                'phone_number' => $validation['phone_number'],
-                'address' => $validation['address'],
-                'date_of_entry' => $validation['date_of_entry'],
-                'photo' => $photoFileName, // ✅ Photo baru atau yang lama
-                'is_active' => $validation['is_active'],
-            ];
-
-            // Jika ada user_id dalam request, update juga
-            if (isset($validation['user_id'])) {
-                $employeeData['user_id'] = $validation['user_id'];
-            }
-
-            // Update employee
-            $employee->update($employeeData);
-
-            // ✅ Hapus photo lama SETELAH update berhasil
-            if ($oldPhotoPath && file_exists($oldPhotoPath)) {
-                unlink($oldPhotoPath);
-            }
+            // Update data employee
+            $employee->update(array_merge($validatedData, ['photo' => $photoFileName]));
 
             DB::commit();
 
-            // ✅ Tambahkan full URL photo untuk response
-            $employeeResponse = $employee->fresh()->toArray();
-            if ($employee->photo) {
-                $employeeResponse['photo_url'] = asset('storage/employee_photos/' . $employee->photo);
+            // Siapkan response dengan data terbaru dan URL foto
+            $employeeResponse = $employee->fresh();
+            if ($employeeResponse->photo) {
+                $employeeResponse->photo_url = Storage::url('employee_photos/' . $employeeResponse->photo);
             }
 
             return response()->json([
@@ -368,12 +336,13 @@ class EmployeeController extends Controller
                 'message' => 'Employee updated successfully',
                 'data' => $employeeResponse
             ], 200);
+
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // ✅ Hapus file photo baru jika ada error setelah upload
-            if (isset($photoFileName) && $photoFileName && $photoFileName !== $employee->photo && file_exists(storage_path('app/public/employee_photos/' . $photoFileName))) {
-                unlink(storage_path('app/public/employee_photos/' . $photoFileName));
+            // Jika terjadi error SETELAH foto baru diupload, hapus foto baru tersebut
+            if (isset($photoFile) && isset($photoFileName) && $photoFileName !== $employee->getOriginal('photo')) {
+                 Storage::disk('public')->delete('employee_photos/' . $photoFileName);
             }
 
             return response()->json([
