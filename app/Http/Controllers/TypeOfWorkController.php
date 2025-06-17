@@ -20,6 +20,17 @@ class TypeOfWorkController extends Controller
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
 
+            if ($request->has('all')) {
+                $typeOfWorks = $query->get(); // Gunakan get() untuk mengambil semua record
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'All data retrieved successfully',
+                    'data' => $typeOfWorks,
+                ], 200);
+            }
+
+
             // Pagination
             $perPage = $request->per_page ?? 10;
             $typeOfWorks = $query->paginate($perPage);
@@ -112,11 +123,11 @@ class TypeOfWorkController extends Controller
         }
     }
 
-    public function update(Request $request, $slug)
+    public function update(Request $request, $id)
     {
         DB::beginTransaction();
         try {
-            $typeOfWork = TypeOfWork::where('slug', $slug)->firstOrFail();
+            $typeOfWork = TypeOfWork::where('id', $id)->firstOrFail();
 
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|required|string|max:255',

@@ -20,6 +20,16 @@ class CompletionStatusController extends Controller
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
 
+            if ($request->has('all')) {
+                $completionStatuses = $query->get(); // Gunakan get() untuk mengambil semua record
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'All data retrieved successfully',
+                    'data' => $completionStatuses,
+                ], 200);
+            }
+
             // Pagination
             $perPage = $request->per_page ?? 10;
             $completionStatuses = $query->paginate($perPage);
@@ -113,11 +123,11 @@ class CompletionStatusController extends Controller
         }
     }
 
-    public function update(Request $request, $slug)
+    public function update(Request $request, $id)
     {
         DB::beginTransaction();
         try {
-            $completionStatus = CompletionStatus::where('slug', $slug)->firstOrFail();
+            $completionStatus = CompletionStatus::where('id', $id)->firstOrFail();
 
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|required|string|max:255',

@@ -10,7 +10,7 @@ class TypeOfWork extends Model
 {
     use HasFactory;
 
-    protected  $table = "typ_of_works";
+    protected  $table = "type_of_works";
 
     protected $fillable = [
         "name",

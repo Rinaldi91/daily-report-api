@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CompletionStatusController;
 use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HealthFacilityController;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\IndonesiaController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\RegionController;
+use App\Http\Controllers\TypeOfWorkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -117,5 +119,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('employee', [EmployeeController::class, 'store'])->middleware('check.permission:create-employee');
     Route::put('employee/{id}', [EmployeeController::class, 'update'])->middleware('check.permission:update-employee');
     Route::delete('employee/{id}', [EmployeeController::class, 'destroy'])->middleware('check.permission:delete-employee');
+
+    // Type Of Works
+    Route::get('type-of-work', [TypeOfWorkController::class, 'index'])->middleware('check.permission:view-type-of-work');
+    Route::get('type-of-work/{slug}', [TypeOfWorkController::class, 'show'])->middleware('check.permission:show-type-of-work');
+    Route::post('type-of-work', [TypeOfWorkController::class, 'store'])->middleware('check.permission:create-type-of-work');
+    Route::put('type-of-work/{id}', [TypeOfWorkController::class, 'update'])->middleware('check.permission:update-type-of-work');
+    Route::delete('type-of-work/{slug}', [TypeOfWorkController::class, 'destroy'])->middleware('check.permission:delete-type-of-work');
+
+    //Completion Status
+    Route::get('completion-status', [CompletionStatusController::class, 'index'])->middleware('check.permission:view-completion-status');
+    Route::get('completion-status/{slug}', [CompletionStatusController::class, 'show'])->middleware('check.permission:show-completion-status');
+    Route::post('completion-status', [CompletionStatusController::class, 'store'])->middleware('check.permission:create-completion-status');
+    Route::put('completion-status/{id}', [CompletionStatusController::class, 'update'])->middleware('check.permission:update-completion-status');
+    Route::delete('completion-status/{slug}', [CompletionStatusController::class, 'destroy'])->middleware('check.permission:delete-completion-status');
     
 });

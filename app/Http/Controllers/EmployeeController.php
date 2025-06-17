@@ -241,42 +241,22 @@ class EmployeeController extends Controller
 
         // Aturan validasi yang lebih bersih dan aman
         $validatedData = $request->validate([
-            'user_id'       => 'nullable|exists:users,id',
-            'region'        => 'required|string|max:255',
-            'division_id'   => 'required|exists:divisions,id',
-            'position_id'   => 'required|exists:positions,id',
-            // Gunakan Rule::unique untuk mengabaikan ID saat ini. Ini lebih mudah dibaca.
-            'nik'           => ['required', 'string', 'digits:16', Rule::unique('employees')->ignore($employee->id)],
-            'name'          => 'required|string|max:255',
-            'gender'        => 'required|string|in:Laki-Laki,Perempuan', // Lebih spesifik
+            'user_id'        => 'nullable|exists:users,id',
+            'region'         => 'required|string|max:255',
+            'division_id'    => 'required|exists:divisions,id',
+            'position_id'    => 'required|exists:positions,id',
+            'nik'            => ['required', 'string', 'digits:16', Rule::unique('employees')->ignore($employee->id)],
+            'name'           => 'required|string|max:255',
+            'gender'         => 'required|string|in:Laki-Laki,Perempuan', // Lebih spesifik
             'place_of_birth' => 'required|string|max:255',
-            'date_of_birth' => 'required|date',
-            'email'         => ['required', 'email', 'max:255', Rule::unique('employees')->ignore($employee->id)],
-            'phone_number'  => ['required', 'string', 'numeric', 'digits_between:10,15', Rule::unique('employees')->ignore($employee->id)],
-            'address'       => 'required|string',
-            'date_of_entry' => 'required|date',
-            'photo'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_active'     => 'required|boolean',
+            'date_of_birth'  => 'required|date',
+            'email'          => ['required', 'email', 'max:255', Rule::unique('employees')->ignore($employee->id)],
+            'phone_number'   => ['required', 'string', 'numeric', 'digits_between:10,15', Rule::unique('employees')->ignore($employee->id)],
+            'address'        => 'required|string',
+            'date_of_entry'  => 'required|date',
+            'photo'          => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // PERUBAHAN UTAMA DI SINI
+            'is_active'      => 'required|boolean',
         ]);
-
-        // Karena validasi di atas sudah menangani keunikan NIK, email, dan phone_number,
-        // blok pengecekan manual yang menyebabkan error bisa DIHAPUS.
-        // Namun, jika Anda tetap ingin melakukannya, berikut cara yang benar:
-        /*
-        $existingEmployee = Employee::where(function ($query) use ($validatedData) {
-            $query->where('email', $validatedData['email'])
-                  ->orWhere('phone_number', $validatedData['phone_number']);
-        })->where('id', '!=', $employee->id)->first();
-
-        if ($existingEmployee) {
-            $field = $existingEmployee->email === $validatedData['email'] ? 'email' : 'phone number';
-            return response()->json([
-                'status' => false,
-                'message' => "Employee with this {$field} already exists.",
-            ], 409);
-        }
-        */
-
 
         try {
             DB::beginTransaction();
@@ -304,7 +284,7 @@ class EmployeeController extends Controller
                     $existingUser = User::where('email', $validatedData['email'])
                         ->where('id', '!=', $user->id)
                         ->first();
-                    
+
                     if ($existingUser) {
                         DB::rollBack(); // Batalkan transaksi jika email sudah dipakai user lain
                         return response()->json([
@@ -321,6 +301,9 @@ class EmployeeController extends Controller
             }
 
             // Update data employee
+            // Pastikan Anda hanya menambahkan 'photo' ke $validatedData jika memang ada perubahan
+            // atau jika Anda ingin menyimpannya kembali jika 'photo' sebelumnya null.
+            // Baris ini sudah benar karena $photoFileName akan tetap menjadi foto lama jika tidak ada upload baru.
             $employee->update(array_merge($validatedData, ['photo' => $photoFileName]));
 
             DB::commit();
@@ -336,13 +319,12 @@ class EmployeeController extends Controller
                 'message' => 'Employee updated successfully',
                 'data' => $employeeResponse
             ], 200);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
             // Jika terjadi error SETELAH foto baru diupload, hapus foto baru tersebut
             if (isset($photoFile) && isset($photoFileName) && $photoFileName !== $employee->getOriginal('photo')) {
-                 Storage::disk('public')->delete('employee_photos/' . $photoFileName);
+                Storage::disk('public')->delete('employee_photos/' . $photoFileName);
             }
 
             return response()->json([
