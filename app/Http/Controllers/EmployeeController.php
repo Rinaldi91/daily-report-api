@@ -33,6 +33,11 @@ class EmployeeController extends Controller
                 $query->where('division_id', $request->division_id);
             }
 
+            if ($request->has('is_active')) {
+                $query->where('is_active', $request->is_active);
+            }
+
+
             // ✅ Filter berdasarkan position_id jika ada
             if ($request->has('position_id')) {
                 $query->where('position_id', $request->position_id);
