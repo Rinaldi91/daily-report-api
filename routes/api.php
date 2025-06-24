@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\IndonesiaController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\RegionController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TypeOfWorkController;
 
 /*
@@ -27,6 +28,7 @@ use App\Http\Controllers\TypeOfWorkController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
@@ -48,7 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users', [UserController::class, 'store'])->middleware('check.permission:create-users');
     Route::put('/users/{id}', [UserController::class, 'update'])->middleware('check.permission:update-users');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('check.permission:delete-users');
-    
+
     // Role routes
     Route::get('/roles', [RoleController::class, 'index'])->middleware('check.permission:view-roles');
     Route::get('/roles/{id}', [RoleController::class, 'show'])->middleware('check.permission:show-roles');
@@ -84,7 +86,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('medical-device-category', [MedicalDeviceCategoryController::class, 'store'])->middleware('check.permission:create-medical-device-category');
     Route::put('medical-device-category/{slug}', [MedicalDeviceCategoryController::class, 'update'])->middleware('check.permission:update-medical-device-category');
     Route::delete('medical-device-category/{slug}', [MedicalDeviceCategoryController::class, 'destroy'])->middleware('check.permission:delete-medical-device-category');
-    
+
     //Medical Device
     Route::get('medical-device', [MedicalDeviceController::class, 'index'])->middleware('check.permission:view-medical-device');
     Route::get('medical-device/{id}', [MedicalDeviceController::class, 'show'])->middleware('check.permission:show-medical-device');
@@ -100,7 +102,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('region/{slug}', [RegionController::class, 'destroy'])->middleware('check.permission:delete-region');
 
     //Division
-    Route::get('division',[DivisionController::class, 'index'])->middleware('check.permission:view-division');
+    Route::get('division', [DivisionController::class, 'index'])->middleware('check.permission:view-division');
     Route::get('division/{slug}', [DivisionController::class, 'show'])->middleware('check.permission:show-division');
     Route::post('division', [DivisionController::class, 'store'])->middleware('check.permission:create-division');
     Route::put('division/{slug}', [DivisionController::class, 'update'])->middleware('check.permission:update-division');
@@ -133,5 +135,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('completion-status', [CompletionStatusController::class, 'store'])->middleware('check.permission:create-completion-status');
     Route::put('completion-status/{id}', [CompletionStatusController::class, 'update'])->middleware('check.permission:update-completion-status');
     Route::delete('completion-status/{slug}', [CompletionStatusController::class, 'destroy'])->middleware('check.permission:delete-completion-status');
-    
+
+    //Report
+    Route::get('report', [ReportController::class, 'index'])->middleware('check.permission:view-report');
+    Route::get('report/{id}', [ReportController::class, 'show'])->middleware('check.permission:show-report');
+    Route::post('report', [ReportController::class, 'store'])->middleware('check.permission:create-report');
+    Route::put('report/{id}', [ReportController::class, 'update'])->middleware('check.permission:update-report');
+    Route::delete('report/{id}', [ReportController::class, 'destroy'])->middleware('check.permission:delete-report');
+    Route::put('report/{reportId}/details', [ReportController::class, 'updateReportDetail'])->middleware('check.permission:update-report');
+    Route::delete('report/{id}', [ReportController::class, 'destroy'])->middleware('check.permission:delete-report');
+
+    Route::put('report/{reportId}/complete', [ReportController::class, 'completeReport'])->middleware('check.permission:update-report');
+    Route::get('employees/{employeeId}/report', [ReportController::class, 'getReportsByEmployee'])->middleware('check.permission:view-report');
+
+    // Route untuk serving signature files
+    Route::get('signatures/{type}/{fileName}', [ReportController::class, 'getSignatureFile'])->middleware('check.permission:view-report')
+        ->name('signature.file')
+        ->where('type', 'employee|customer');
 });

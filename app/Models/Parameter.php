@@ -5,16 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ReportDeviceItem extends Model
+class Parameter extends Model
 {
     use HasFactory;
 
-    protected $table = 'report_device_items';
+    protected $table = 'parameters';
 
     protected $fillable = [
         'report_id',
-        'medical_device_id',
-        'type_of_work_id',
+        'name',
+        'uraian',
+        'description',
     ];
 
     public function report(){

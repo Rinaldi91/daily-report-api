@@ -34,6 +34,11 @@ class HealthFacility extends Model
         return $this->hasMany(Report::class, 'health_facility_id');
     }
 
+    public function reportDeviceItem()
+    {
+        return $this->hasMany(ReportDeviceItem::class, 'health_facility_id');
+    }
+
     // Relasi many-to-many dengan medical devices melalui pivot table
     public function medicalDevices()
     {

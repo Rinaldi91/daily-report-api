@@ -80,6 +80,7 @@ class EmployeeController extends Controller
             ], 500);
         }
     }
+    
     public function show($id)
     {
         try {
@@ -128,6 +129,7 @@ class EmployeeController extends Controller
                 'date_of_entry' => 'required|date',
                 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'is_active' => 'required|boolean',
+                'status' => 'required|string',
             ]);
 
             // ✅ Cek apakah sudah ada employee dengan email atau phone_number
@@ -198,7 +200,7 @@ class EmployeeController extends Controller
                     'employee_number' => $employeeNumber,
                     'photo' => $photoFileName, // ✅ PENTING: Set photo di sini
                     'is_active' => $validation['is_active'],
-                    'status' => 1,
+                    'status' => $validation['status']
                 ];
             } else {
                 $employeeData = array_merge($validation, [
@@ -261,6 +263,7 @@ class EmployeeController extends Controller
             'date_of_entry'  => 'required|date',
             'photo'          => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // PERUBAHAN UTAMA DI SINI
             'is_active'      => 'required|boolean',
+            'status'      => 'required|string',
         ]);
 
         try {

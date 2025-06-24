@@ -23,6 +23,10 @@ class CompletionStatus extends Model
         return $this->hasMany(ReportDeviceItem::class);
     }
 
+    public function reportDetail(){
+        return $this->hasMany(ReportDetail::class, 'completion_status_id');
+    }
+
     protected static function boot(){
         parent::boot();
         static::creating(function ($model) {
