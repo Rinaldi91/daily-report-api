@@ -25,6 +25,7 @@ class Report extends Model
         'attendance_customer',
         'is_status',
         'completed_at',
+        'total_time'
     ];
 
     public function employee(){
@@ -44,7 +45,7 @@ class Report extends Model
     }
 
     public function parameter(){
-        return $this->belongsTo(Parameter::class, 'report_id');
+        return $this->hasMany(Parameter::class, 'report_id');
     }
 
     public function reportDetail(){

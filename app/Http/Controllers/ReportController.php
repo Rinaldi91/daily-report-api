@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Location;
+use App\Models\Parameter;
+use App\Models\PartUsedForImage;
+use App\Models\PartUsedForRepair;
 
 class ReportController extends Controller
 {
@@ -148,7 +151,7 @@ class ReportController extends Controller
             // Simpan report
             $report = Report::create($reportData);
 
-             Location::create([
+            Location::create([
                 'report_id' => $report->id,
                 'latitude' => $validation['latitude'],
                 'longitude' => $validation['longitude'],
@@ -222,6 +225,17 @@ class ReportController extends Controller
                 'latitude' => 'required|string',
                 'longitude' => 'required|string',
                 'address' => 'required|string|max:255',
+
+                'parameters' => 'nullable|array',
+                'parameters.*.name' => 'required_with:parameters|string|max:255',
+                'parameters.*.uraian' => 'nullable|string|max:1000',
+                'parameters.*.description' => 'nullable|string|max:1000',
+
+                'parts_used' => 'nullable|array',
+                'parts_used.*.uraian' => 'required_with:parts_used|string|max:255',
+                'parts_used.*.quantity' => 'required_with:parts_used|integer|min:1',
+                'parts_used.*.images' => 'nullable|array',
+                'parts_used.*.images.*' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
 
             $lokasi = Location::where('report_id', $report->id)->firstOrFail();
@@ -265,10 +279,52 @@ class ReportController extends Controller
 
             $reportDetail = ReportDetail::create($reportDetailData);
 
+            // Tambahan: Simpan data parameters
+            if (!empty($validation['parameters'])) {
+                foreach ($validation['parameters'] as $paramData) {
+                    Parameter::create([
+                        'report_id' => $reportId,
+                        'name' => $paramData['name'],
+                        'uraian' => $paramData['uraian'] ?? null,
+                        'description' => $paramData['description'] ?? null,
+                    ]);
+                }
+            }
+
+            // Tambahan: Simpan data parts used dan images
+            if ($request->has('parts_used')) {
+                foreach ($request->input('parts_used') as $index => $partData) {
+                    // Buat record part terlebih dahulu untuk mendapatkan ID-nya
+                    $part = PartUsedForRepair::create([
+                        'report_id' => $reportId,
+                        'uraian' => $partData['uraian'],
+                        'quantity' => $partData['quantity'],
+                    ]);
+
+                    // Cek dan simpan gambar-gambar untuk part ini
+                    if ($request->hasFile("parts_used.{$index}.images")) {
+                        foreach ($request->file("parts_used.{$index}.images") as $imageFile) {
+                            // Simpan file dan dapatkan path-nya
+                            $path = $imageFile->store("part_images/report_{$reportId}", 'public');
+
+                            PartUsedForImage::create([
+                                'part_used_for_repair_id' => $part->id,
+                                'image' => $path,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+
+            $completedAt = now();
+            $totalSeconds = $report->created_at->diffInSeconds($completedAt);
+            $totalTime = gmdate('H:i:s', $totalSeconds);
             // Update status report menjadi completed
             $report->update([
                 'is_status' => true,
-                'completed_at' => now()
+                'completed_at' => $completedAt, // Gunakan variabel yang sudah dibuat
+                'total_time' => $totalTime      // Simpan total waktu yang sudah diformat
             ]);
 
             DB::commit();
@@ -283,6 +339,8 @@ class ReportController extends Controller
                     'reportDeviceItem',
                     'reportDetail.completionStatus',
                     'location',
+                    'parameter', // Tambahan: Muat relasi baru
+                    'partUsedForRepair.images' // Tambahan: Muat relasi bersarang
                 ])
             ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -354,7 +412,7 @@ class ReportController extends Controller
             return null;
         }
 
-        return asset("storage/signatures/{$folder}/{$fileName}");
+        return url("storage/signatures/{$folder}/{$fileName}");
     }
 
     public function show($id)
@@ -366,7 +424,9 @@ class ReportController extends Controller
                 'employee',
                 'healthFacility',
                 'ReportDeviceItem',
-                'Location'
+                'Location',
+                'parameter', // Tambahan: Muat relasi baru
+                'partUsedForRepair.images'
             ])->findOrFail($id);
 
             // Konversi ke array untuk manipulasi data

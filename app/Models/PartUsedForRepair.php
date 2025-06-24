@@ -22,7 +22,7 @@ class PartUsedForRepair extends Model
         return $this->belongsTo(Report::class, 'report_id');
     }
 
-    public function partUsedForImage(){
+    public function images(){
         return $this->hasMany(PartUsedForImage::class, 'part_used_for_repair_id');
     }
 }
