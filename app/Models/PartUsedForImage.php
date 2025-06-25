@@ -9,7 +9,7 @@ class PartUsedForImage extends Model
 {
     use HasFactory;
 
-    protected $table = 'part_used_for_images';
+    protected $table = 'part_used_for_repair_images';
 
     protected $fillable = [
         'part_used_for_id',

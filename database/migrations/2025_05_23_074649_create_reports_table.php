@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('problem');
             $table->string('error_code');
             $table->longText('job_action')->nullable();
-            $table->boolean('is_status')->nullable()->default(false);
+            $table->enum('is_status', ['Progress', 'Pending', 'Completed'])->default('Progress');
             $table->dateTime('completed_at')->nullable();
             $table->timestamps();
         });

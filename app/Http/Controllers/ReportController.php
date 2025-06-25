@@ -12,6 +12,7 @@ use App\Models\Location;
 use App\Models\Parameter;
 use App\Models\PartUsedForImage;
 use App\Models\PartUsedForRepair;
+use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
 {
@@ -145,7 +146,7 @@ class ReportController extends Controller
                 'problem' => $validation['problem'],
                 'error_code' => $validation['error_code'],
                 'job_action' => $validation['job_action'],
-                'is_status' => false // Status awal
+                'is_status' => 'Progress' // Status awal
             ];
 
             // Simpan report
@@ -189,6 +190,191 @@ class ReportController extends Controller
         }
     }
 
+    // public function completeReport(Request $request, $reportId)
+    // {
+    //     try {
+    //         DB::beginTransaction();
+
+    //         // Validasi bahwa report ada dan belum selesai
+    //         $report = Report::findOrFail($reportId);
+
+    //         if ($report->is_status === 'Completed') {
+    //             return response()->json([
+    //                 'status' => 'Progress',
+    //                 'message' => 'Report has already been completed'
+    //             ], 400);
+    //         }
+
+    //         // Validasi bahwa report detail belum ada (mencegah duplikasi)
+    //         $existingDetail = ReportDetail::where('report_id', $reportId)->first();
+    //         if ($existingDetail) {
+    //             return response()->json([
+    //                 'status' => false,
+    //                 'message' => 'Report detail already exists for this report'
+    //             ], 400);
+    //         }
+
+    //         $validation = $request->validate([
+    //             'completion_status_id' => 'required|exists:completion_statuses,id',
+    //             'note' => 'nullable|string|max:1000',
+    //             'suggestion' => 'nullable|string|max:1000',
+    //             'customer_name' => 'nullable|string|max:255',
+    //             'customer_phone' => 'nullable|string|max:20',
+    //             'attendance_employee' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
+    //             'attendance_customer' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
+
+    //             'latitude' => 'required|string',
+    //             'longitude' => 'required|string',
+    //             'address' => 'required|string|max:255',
+
+    //             'parameters' => 'nullable|array',
+    //             'parameters.*.name' => 'required_with:parameters|string|max:255',
+    //             'parameters.*.uraian' => 'nullable|string|max:1000',
+    //             'parameters.*.description' => 'nullable|string|max:1000',
+
+    //             'parts_used' => 'nullable|array',
+    //             'parts_used.*.uraian' => 'required_with:parts_used|string|max:255',
+    //             'parts_used.*.quantity' => 'required_with:parts_used|integer|min:1',
+    //             'parts_used.*.images' => 'nullable|array',
+    //             'parts_used.*.images.*' => 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048',
+    //         ]);
+
+    //         $lokasi = Location::where('report_id', $report->id)->firstOrFail();
+    //         $lokasi->update([
+    //             'latitude' => $validation['latitude'],
+    //             'longitude' => $validation['longitude'],
+    //             'address' => $validation['address'],
+    //         ]);
+
+    //         // Handle upload tanda tangan teknisi
+    //         $employeeSignaturePath = null;
+    //         if ($request->hasFile('attendance_employee')) {
+    //             $employeeSignaturePath = $this->uploadSignature(
+    //                 $request->file('attendance_employee'),
+    //                 'employee_signatures',
+    //                 $reportId
+    //             );
+    //         }
+
+    //         // Handle upload tanda tangan customer
+    //         $customerSignaturePath = null;
+    //         if ($request->hasFile('attendance_customer')) {
+    //             $customerSignaturePath = $this->uploadSignature(
+    //                 $request->file('attendance_customer'),
+    //                 'customer_signatures',
+    //                 $reportId
+    //             );
+    //         }
+
+    //         // Buat report detail
+    //         $reportDetailData = [
+    //             'report_id' => $reportId,
+    //             'completion_status_id' => $validation['completion_status_id'],
+    //             'note' => $validation['note'] ?? null,
+    //             'suggestion' => $validation['suggestion'] ?? null,
+    //             'customer_name' => $validation['customer_name'] ?? null,
+    //             'customer_phone' => $validation['customer_phone'] ?? null,
+    //             'attendance_employee' => $employeeSignaturePath,
+    //             'attendance_customer' => $customerSignaturePath,
+    //         ];
+
+    //         $reportDetail = ReportDetail::create($reportDetailData);
+
+    //         // Tambahan: Simpan data parameters
+    //         if (!empty($validation['parameters'])) {
+    //             foreach ($validation['parameters'] as $paramData) {
+    //                 Parameter::create([
+    //                     'report_id' => $reportId,
+    //                     'name' => $paramData['name'],
+    //                     'uraian' => $paramData['uraian'] ?? null,
+    //                     'description' => $paramData['description'] ?? null,
+    //                 ]);
+    //             }
+    //         }
+
+    //         // Tambahan: Simpan data parts used dan images
+    //         if ($request->has('parts_used')) {
+    //             foreach ($request->input('parts_used') as $index => $partData) {
+    //                 // Buat record part terlebih dahulu untuk mendapatkan ID-nya
+    //                 $part = PartUsedForRepair::create([
+    //                     'report_id' => $reportId,
+    //                     'uraian' => $partData['uraian'],
+    //                     'quantity' => $partData['quantity'],
+    //                 ]);
+
+    //                 // Cek dan simpan gambar-gambar untuk part ini
+    //                 if ($request->hasFile("parts_used.{$index}.images")) {
+    //                     foreach ($request->file("parts_used.{$index}.images") as $imageFile) {
+    //                         // Simpan file dan dapatkan path-nya
+    //                         $path = $imageFile->store("part_images/report_{$reportId}", 'public');
+
+    //                         PartUsedForImage::create([
+    //                             'part_used_for_repair_id' => $part->id,
+    //                             'image' => $path,
+    //                         ]);
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+
+    //         $completedAt = now();
+    //         $totalSeconds = $report->created_at->diffInSeconds($completedAt);
+    //         $totalTime = gmdate('H:i:s', $totalSeconds);
+    //         // Update status report menjadi completed
+    //         $report->update([
+    //             'is_status' => 'Completed',
+    //             'completed_at' => $completedAt, // Gunakan variabel yang sudah dibuat
+    //             'total_time' => $totalTime      // Simpan total waktu yang sudah diformat
+    //         ]);
+
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'status' => true,
+    //             'message' => 'Report completed successfully',
+    //             'data' => $report->fresh()->load([
+    //                 'user',
+    //                 'employee',
+    //                 'healthFacility',
+    //                 'reportDeviceItem',
+    //                 'reportDetail.completionStatus',
+    //                 'location',
+    //                 'parameter', // Tambahan: Muat relasi baru
+    //                 'partUsedForRepair.images' // Tambahan: Muat relasi bersarang
+    //             ])
+    //         ], 200);
+    //     } catch (\Illuminate\Validation\ValidationException $e) {
+    //         DB::rollBack();
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Validation failed',
+    //             'errors' => $e->errors()
+    //         ], 422);
+    //     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+    //         DB::rollBack();
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Report not found'
+    //         ], 404);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+
+    //         // Log error untuk debugging
+    //         Log::error('Complete Report Error: ' . $e->getMessage(), [
+    //             'report_id' => $reportId,
+    //             'request_data' => $request->except(['attendance_employee', 'attendance_customer']),
+    //             'trace' => $e->getTraceAsString()
+    //         ]);
+
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Failed to complete report',
+    //             'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+    //         ], 500);
+    //     }
+    // }
+
     public function completeReport(Request $request, $reportId)
     {
         try {
@@ -197,9 +383,9 @@ class ReportController extends Controller
             // Validasi bahwa report ada dan belum selesai
             $report = Report::findOrFail($reportId);
 
-            if ($report->is_status === true) {
+            if ($report->is_status === 'Completed') {
                 return response()->json([
-                    'status' => false,
+                    'status' => 'Progress',
                     'message' => 'Report has already been completed'
                 ], 400);
             }
@@ -266,7 +452,7 @@ class ReportController extends Controller
             }
 
             // Buat report detail
-            $reportDetailData = [
+            $reportDetail = ReportDetail::create([
                 'report_id' => $reportId,
                 'completion_status_id' => $validation['completion_status_id'],
                 'note' => $validation['note'] ?? null,
@@ -275,11 +461,9 @@ class ReportController extends Controller
                 'customer_phone' => $validation['customer_phone'] ?? null,
                 'attendance_employee' => $employeeSignaturePath,
                 'attendance_customer' => $customerSignaturePath,
-            ];
+            ]);
 
-            $reportDetail = ReportDetail::create($reportDetailData);
-
-            // Tambahan: Simpan data parameters
+            // Simpan data parameters
             if (!empty($validation['parameters'])) {
                 foreach ($validation['parameters'] as $paramData) {
                     Parameter::create([
@@ -291,41 +475,87 @@ class ReportController extends Controller
                 }
             }
 
-            // Tambahan: Simpan data parts used dan images
+            // Simpan data parts used dan images
             if ($request->has('parts_used')) {
                 foreach ($request->input('parts_used') as $index => $partData) {
-                    // Buat record part terlebih dahulu untuk mendapatkan ID-nya
+                    // Validasi data part terlebih dahulu
+                    if (!isset($partData['uraian']) || !isset($partData['quantity'])) {
+                        continue; // Skip jika data tidak lengkap
+                    }
+
+                    // Simpan data part (selalu disimpan meskipun tanpa image)
                     $part = PartUsedForRepair::create([
                         'report_id' => $reportId,
                         'uraian' => $partData['uraian'],
                         'quantity' => $partData['quantity'],
                     ]);
 
-                    // Cek dan simpan gambar-gambar untuk part ini
+                    // Proses image hanya jika ada file yang diupload
                     if ($request->hasFile("parts_used.{$index}.images")) {
-                        foreach ($request->file("parts_used.{$index}.images") as $imageFile) {
-                            // Simpan file dan dapatkan path-nya
-                            $path = $imageFile->store("part_images/report_{$reportId}", 'public');
+                        $images = $request->file("parts_used.{$index}.images");
 
-                            PartUsedForImage::create([
-                                'part_used_for_repair_id' => $part->id,
-                                'image' => $path,
-                            ]);
+                        // Pastikan $images adalah array, jika tidak jadikan array
+                        if (!is_array($images)) {
+                            $images = [$images];
+                        }
+
+                        foreach ($images as $imageFile) {
+                            // Validasi file image
+                            if ($imageFile->isValid()) {
+                                // Tentukan path folder
+                                $folderPath = "part_images/report_{$reportId}";
+
+                                // Buat folder jika belum ada
+                                if (!Storage::disk('public')->exists($folderPath)) {
+                                    Storage::disk('public')->makeDirectory($folderPath);
+                                }
+
+                                // Generate nama file unik untuk menghindari konflik
+                                $fileName = time() . '_' . uniqid() . '.' . $imageFile->getClientOriginalExtension();
+                                $fullPath = $folderPath . '/' . $fileName;
+
+                                // Simpan file
+                                $path = $imageFile->storeAs($folderPath, $fileName, 'public');
+
+                                // Simpan record image ke database
+                                PartUsedForImage::create([
+                                    'part_used_for_repair_id' => $part->id,
+                                    'image' => $path,
+                                ]);
+                            }
                         }
                     }
                 }
             }
 
+            // === AWAL PERUBAHAN ===
+            // Tentukan status report berdasarkan completion_status_id
+            $reportUpdateData = [];
 
-            $completedAt = now();
-            $totalSeconds = $report->created_at->diffInSeconds($completedAt);
-            $totalTime = gmdate('H:i:s', $totalSeconds);
-            // Update status report menjadi completed
-            $report->update([
-                'is_status' => true,
-                'completed_at' => $completedAt, // Gunakan variabel yang sudah dibuat
-                'total_time' => $totalTime      // Simpan total waktu yang sudah diformat
-            ]);
+            if ($validation['completion_status_id'] == 1) { // Selesai
+                $completedAt = now();
+                $totalSeconds = $report->created_at->diffInSeconds($completedAt);
+                $totalTime = gmdate('H:i:s', $totalSeconds);
+
+                $reportUpdateData = [
+                    'is_status' => 'Completed',
+                    'completed_at' => $completedAt,
+                    'total_time' => $totalTime
+                ];
+            } elseif ($validation['completion_status_id'] == 2) { // Tidak Selesai
+                $reportUpdateData = [
+                    'is_status' => 'Pending',
+                    'completed_at' => null, // Pastikan completed_at kosong
+                    'total_time' => null    // Pastikan total_time kosong
+                ];
+            }
+            // Jika ada status lain, Anda bisa menambahkannya dengan blok elseif lainnya.
+
+            // Update status report jika ada data yang perlu diupdate
+            if (!empty($reportUpdateData)) {
+                $report->update($reportUpdateData);
+            }
+            // === AKHIR PERUBAHAN ===
 
             DB::commit();
 
@@ -339,8 +569,8 @@ class ReportController extends Controller
                     'reportDeviceItem',
                     'reportDetail.completionStatus',
                     'location',
-                    'parameter', // Tambahan: Muat relasi baru
-                    'partUsedForRepair.images' // Tambahan: Muat relasi bersarang
+                    'parameter',
+                    'partUsedForRepair.images'
                 ])
             ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -359,7 +589,6 @@ class ReportController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // Log error untuk debugging
             Log::error('Complete Report Error: ' . $e->getMessage(), [
                 'report_id' => $reportId,
                 'request_data' => $request->except(['attendance_employee', 'attendance_customer']),
